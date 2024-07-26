@@ -52,22 +52,25 @@ function transformData(data) {
 
 function convertFile() {
     const inputFile = document.getElementById('inputFile').files[0];
+    if (!inputFile) {
+        alert('Please select a file first');
+        return;
+    }
+
     const reader = new FileReader();
-
     reader.onload = function(event) {
-        const inputJson = JSON.parse(event.target.result);
-        const transformedData = Object.fromEntries(
-            Object.entries(inputJson).map(([key, value]) => [key, transformData(value)])
-        );
-
-        const outputJson = JSON.stringify(transformedData, null, 4);
-        const blob = new Blob([outputJson], { type: 'application/json' });
+        const inputData = JSON.parse(event.target.result);
+        const convertedData = convertData(inputData);
+        const outputBlob = new Blob([JSON.stringify(convertedData, null, 2)], { type: 'application/json' });
         const downloadLink = document.getElementById('downloadLink');
-        
-        downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = 'output.json';
+        downloadLink.href = URL.createObjectURL(outputBlob);
+        downloadLink.download = 'converted_config.json';
         downloadLink.style.display = 'block';
     };
-
     reader.readAsText(inputFile);
+}
+
+function convertData(data) {
+    // Здесь должна быть логика конвертации данных
+    return data; // Для примера просто возвращаем исходные данные
 }
