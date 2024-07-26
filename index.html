@@ -4,12 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>config_EntityLists Converter</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #downloadLink {
+            margin-top: 20px;
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    <h1>config_EntityLists Converter</h1>
-    <input type="file" id="inputFile" accept=".json">
-    <button onclick="convertFile()">Convert</button>
-    <a id="downloadLink" style="display: none;">Download Converted JSON</a>
+    <div class="container">
+        <h1>config_EntityLists Converter</h1>
+        <div class="form-group">
+            <input type="file" id="inputFile" class="form-control-file" accept=".json">
+        </div>
+        <button class="btn btn-primary" onclick="convertFile()">Convert</button>
+        <a id="downloadLink" class="btn btn-success" style="display: none;">Download Converted JSON</a>
+    </div>
 
     <script src="script.js"></script>
 </body>
