@@ -10,9 +10,9 @@ function transformItem(item) {
         "haveQuantity": item.haveQuantity,
         "setQuantity": [item.countQuantity, item.QuantRandMin, item.QuantRandMax],
         "setHealth": [1, -1, -1],
-        "toolHealthCoefEnable": 0,
+        "toolHealthCoefEnable": item.toolCoefEnable,
         "coefHealthMinMaxValue": [0.5, 1.0],
-        "toolQuantityCoefEnable": 0,
+        "toolQuantityCoefEnable": item.toolCoefEnable,
         "coefQuantityMinMaxValue": [0.5, 1.0],
         "toolDamageCoef": item.toolDamageCoef,
         "addAgents": addAgents,
@@ -52,25 +52,22 @@ function transformData(data) {
 
 function convertFile() {
     const inputFile = document.getElementById('inputFile').files[0];
-    if (!inputFile) {
-        alert('Please select a file first');
-        return;
-    }
-
     const reader = new FileReader();
+
     reader.onload = function(event) {
-        const inputData = JSON.parse(event.target.result);
-        const convertedData = convertData(inputData);
-        const outputBlob = new Blob([JSON.stringify(convertedData, null, 2)], { type: 'application/json' });
+        const inputJson = JSON.parse(event.target.result);
+        const transformedData = Object.fromEntries(
+            Object.entries(inputJson).map(([key, value]) => [key, transformData(value)])
+        );
+
+        const outputJson = JSON.stringify(transformedData, null, 4);
+        const blob = new Blob([outputJson], { type: 'application/json' });
         const downloadLink = document.getElementById('downloadLink');
-        downloadLink.href = URL.createObjectURL(outputBlob);
-        downloadLink.download = 'converted_config.json';
+        
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = 'output.json';
         downloadLink.style.display = 'block';
     };
-    reader.readAsText(inputFile);
-}
 
-function convertData(data) {
-    // Здесь должна быть логика конвертации данных
-    return data; // Для примера просто возвращаем исходные данные
+    reader.readAsText(inputFile);
 }
