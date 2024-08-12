@@ -65,7 +65,7 @@ function convertFile() {
         const downloadLink = document.getElementById('downloadLink');
         
         downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = 'output.json';
+        downloadLink.download = 'config_EntityLists.json';
         downloadLink.style.display = 'block';
     };
 
