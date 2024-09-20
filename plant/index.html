@@ -41,7 +41,7 @@
                 chanceToSpawn: 1.0,
                 setCount: setCount,
                 setQuantity: setQuantity,
-                setHealth: setQuantity,  // setHealth = setQuantity
+                setHealth: [1.0, -1.0, -1.0],  // setHealth = setQuantity
                 perkCoefEnable: plantData.perkCoefEnable,
                 perkCoefList: []
             };
@@ -68,7 +68,7 @@
                     chanceToSpawn: 1.0,
                     setCount: perkSetCount,
                     setQuantity: perkSetQuantity,
-                    setHealth: perkSetQuantity  // setHealth = setQuantity
+                    setHealth: [1.0, -1.0, -1.0]  // setHealth = setQuantity
                 };
                 transformedData.perkCoefList.push(transformedPerkCoef);
             });
