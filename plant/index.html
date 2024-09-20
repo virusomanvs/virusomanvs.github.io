@@ -17,7 +17,7 @@
         function transformPlantData(plantData) {
             // Обработка setCount в зависимости от randomCount
             let setCount;
-            if (plantData.randomCount === 0) {
+            if (plantData.randomCount === 1) {
                 setCount = [-1, plantData.countRandMin, plantData.countRandMax];
             } else {
                 setCount = [plantData.setCount, -1, -1];
@@ -25,7 +25,7 @@
 
             // Обработка setQuantity в зависимости от randomQuantity
             let setQuantity;
-            if (plantData.randomQuantity === 0) {
+            if (plantData.randomQuantity === 1) {
                 setQuantity = [-1.0, plantData.quantRandMinPerc, plantData.quantRandMaxPerc];
             } else {
                 setQuantity = [plantData.setQuantityPerc, -1.0, -1.0];
@@ -49,14 +49,14 @@
             // Преобразование списка коэффициентов перков
             plantData.perkCoefList.forEach(perkCoef => {
                 let perkSetCount;
-                if (perkCoef.randomCount === 0) {
+                if (perkCoef.randomCount === 1) {
                     perkSetCount = [-1, perkCoef.countRandMin, perkCoef.countRandMax];
                 } else {
                     perkSetCount = [perkCoef.setCount, -1, -1];
                 }
 
                 let perkSetQuantity;
-                if (perkCoef.randomQuantity === 0) {
+                if (perkCoef.randomQuantity === 1) {
                     perkSetQuantity = [-1.0, perkCoef.quantRandMinPerc, perkCoef.quantRandMaxPerc];
                 } else {
                     perkSetQuantity = [perkCoef.setQuantityPerc, -1.0, -1.0];
