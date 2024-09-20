@@ -3,98 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Преобразование JSON</title>
+    <title>Преобразование JSON данных для растений</title>
+    <!-- Подключение Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Преобразование JSON данных для растений</h1>
+<body class="bg-light">
 
-    <input type="file" id="jsonFile" accept=".json">
-    <button onclick="processJson()">Загрузить и преобразовать</button>
-    <pre id="output"></pre>
+<div class="container mt-5">
+    <h1 class="mb-4">Преобразование JSON данных для растений</h1>
 
-    <script>
-        // Функция для преобразования одного объекта растения
-        function transformPlantData(plantData) {
-            // Обработка setCount в зависимости от randomCount
-            let setCount;
-            if (plantData.randomCount === 1) {
-                setCount = [-1, plantData.countRandMin, plantData.countRandMax];
+    <div class="mb-3">
+        <label for="jsonFile" class="form-label">Выберите JSON файл</label>
+        <input type="file" class="form-control" id="jsonFile" accept=".json">
+    </div>
+
+    <div class="mb-3">
+        <button class="btn btn-primary" onclick="processJson()">Загрузить и преобразовать</button>
+        <button class="btn btn-success ms-2" id="downloadBtn" style="display:none;" onclick="downloadJson()">Скачать преобразованный JSON</button>
+    </div>
+
+    <pre id="output" class="p-3 bg-white border rounded" style="max-height: 500px; overflow-y: auto;"></pre>
+</div>
+
+<script>
+    let transformedData;
+
+    // Функция для преобразования одного объекта растения
+    function transformPlantData(plantData) {
+        let setCount;
+        if (plantData.randomCount === 1) {
+            setCount = [-1, plantData.countRandMin, plantData.countRandMax];
+        } else {
+            setCount = [plantData.setCount, -1, -1];
+        }
+
+        let setQuantity;
+        if (plantData.randomQuantity === 1) {
+            setQuantity = [-1.0, plantData.quantRandMinPerc, plantData.quantRandMaxPerc];
+        } else {
+            setQuantity = [plantData.setQuantityPerc, -1.0, -1.0];
+        }
+
+        const transformedData = {
+            plantName: plantData.plantName,
+            itemHarvestName: plantData.itemHarvestName,
+            skillPointsForHarvest: plantData.skillPointsForHarvest,
+            skillTypeForHarvest: "GARDENING",
+            showNotifyAddPoints: 1,
+            chanceToSpawn: 1.0,
+            setCount: setCount,
+            setQuantity: setQuantity,
+            setHealth: [1.0, -1.0, -1.0],
+            perkCoefEnable: plantData.perkCoefEnable,
+            perkCoefList: []
+        };
+
+        plantData.perkCoefList.forEach(perkCoef => {
+            let perkSetCount;
+            if (perkCoef.randomCount === 1) {
+                perkSetCount = [-1, perkCoef.countRandMin, perkCoef.countRandMax];
             } else {
-                setCount = [plantData.setCount, -1, -1];
+                perkSetCount = [perkCoef.setCount, -1, -1];
             }
 
-            // Обработка setQuantity в зависимости от randomQuantity
-            let setQuantity;
-            if (plantData.randomQuantity === 1) {
-                setQuantity = [-1.0, plantData.quantRandMinPerc, plantData.quantRandMaxPerc];
+            let perkSetQuantity;
+            if (perkCoef.randomQuantity === 1) {
+                perkSetQuantity = [-1.0, perkCoef.quantRandMinPerc, perkCoef.quantRandMaxPerc];
             } else {
-                setQuantity = [plantData.setQuantityPerc, -1.0, -1.0];
+                perkSetQuantity = [perkCoef.setQuantityPerc, -1.0, -1.0];
             }
 
-            // Основные поля
-            const transformedData = {
-                plantName: plantData.plantName,
-                itemHarvestName: plantData.itemHarvestName,
-                skillPointsForHarvest: plantData.skillPointsForHarvest,
-                skillTypeForHarvest: "GARDENING",
-                showNotifyAddPoints: 1,
+            const transformedPerkCoef = {
+                enableCoef: perkCoef.enableCoef,
+                perkID: perkCoef.perkID,
                 chanceToSpawn: 1.0,
-                setCount: setCount,
-                setQuantity: setQuantity,
-                setHealth: [1.0, -1.0, -1.0],  // setHealth = setQuantity
-                perkCoefEnable: plantData.perkCoefEnable,
-                perkCoefList: []
+                setCount: perkSetCount,
+                setQuantity: perkSetQuantity,
+                setHealth: [1.0, -1.0, -1.0]
             };
+            transformedData.perkCoefList.push(transformedPerkCoef);
+        });
 
-            // Преобразование списка коэффициентов перков
-            plantData.perkCoefList.forEach(perkCoef => {
-                let perkSetCount;
-                if (perkCoef.randomCount === 1) {
-                    perkSetCount = [-1, perkCoef.countRandMin, perkCoef.countRandMax];
-                } else {
-                    perkSetCount = [perkCoef.setCount, -1, -1];
-                }
+        return transformedData;
+    }
 
-                let perkSetQuantity;
-                if (perkCoef.randomQuantity === 1) {
-                    perkSetQuantity = [-1.0, perkCoef.quantRandMinPerc, perkCoef.quantRandMaxPerc];
-                } else {
-                    perkSetQuantity = [perkCoef.setQuantityPerc, -1.0, -1.0];
-                }
+    // Функция для обработки загруженного файла и преобразования данных
+    function processJson() {
+        const fileInput = document.getElementById('jsonFile');
+        const file = fileInput.files[0];
 
-                const transformedPerkCoef = {
-                    enableCoef: perkCoef.enableCoef,
-                    perkID: perkCoef.perkID,
-                    chanceToSpawn: 1.0,
-                    setCount: perkSetCount,
-                    setQuantity: perkSetQuantity,
-                    setHealth: [1.0, -1.0, -1.0]  // setHealth = setQuantity
-                };
-                transformedData.perkCoefList.push(transformedPerkCoef);
-            });
-
-            return transformedData;
+        if (!file) {
+            alert('Пожалуйста, выберите файл.');
+            return;
         }
 
-        // Функция для обработки загруженного файла и преобразования данных
-        function processJson() {
-            const fileInput = document.getElementById('jsonFile');
-            const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const jsonData = JSON.parse(event.target.result);
+            transformedData = jsonData.map(transformPlantData);
 
-            if (!file) {
-                alert('Пожалуйста, выберите файл.');
-                return;
-            }
+            document.getElementById('output').textContent = JSON.stringify(transformedData, null, 4);
+            document.getElementById('downloadBtn').style.display = 'inline-block';
+        };
+        reader.readAsText(file);
+    }
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const jsonData = JSON.parse(event.target.result);
-                const transformedData = jsonData.map(transformPlantData);
+    // Функция для скачивания преобразованного JSON-файла
+    function downloadJson() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transformedData, null, 4));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "transformed_plant_data.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        document.body.removeChild(downloadAnchor);
+    }
+</script>
 
-                document.getElementById('output').textContent = JSON.stringify(transformedData, null, 4);
-            };
-            reader.readAsText(file);
-        }
-    </script>
+<!-- Подключение Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
