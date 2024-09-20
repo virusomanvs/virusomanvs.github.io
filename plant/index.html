@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Преобразование JSON</title>
+</head>
+<body>
+    <h1>Преобразование JSON данных для растений</h1>
+
+    <input type="file" id="jsonFile" accept=".json">
+    <button onclick="processJson()">Загрузить и преобразовать</button>
+    <pre id="output"></pre>
+
+    <script>
+        // Функция для преобразования одного объекта растения
+        function transformPlantData(plantData) {
+            // Обработка setCount в зависимости от randomCount
+            let setCount;
+            if (plantData.randomCount === 0) {
+                setCount = [-1, plantData.countRandMin, plantData.countRandMax];
+            } else {
+                setCount = [plantData.setCount, -1, -1];
+            }
+
+            // Обработка setQuantity в зависимости от randomQuantity
+            let setQuantity;
+            if (plantData.randomQuantity === 0) {
+                setQuantity = [-1.0, plantData.quantRandMinPerc, plantData.quantRandMaxPerc];
+            } else {
+                setQuantity = [plantData.setQuantityPerc, -1.0, -1.0];
+            }
+
+            // Основные поля
+            const transformedData = {
+                plantName: plantData.plantName,
+                itemHarvestName: plantData.itemHarvestName,
+                skillPointsForHarvest: plantData.skillPointsForHarvest,
+                skillTypeForHarvest: "GARDENING",
+                showNotifyAddPoints: 1,
+                chanceToSpawn: 1.0,
+                setCount: setCount,
+                setQuantity: setQuantity,
+                setHealth: setQuantity,  // setHealth = setQuantity
+                perkCoefEnable: plantData.perkCoefEnable,
+                perkCoefList: []
+            };
+
+            // Преобразование списка коэффициентов перков
+            plantData.perkCoefList.forEach(perkCoef => {
+                let perkSetCount;
+                if (perkCoef.randomCount === 0) {
+                    perkSetCount = [-1, perkCoef.countRandMin, perkCoef.countRandMax];
+                } else {
+                    perkSetCount = [perkCoef.setCount, -1, -1];
+                }
+
+                let perkSetQuantity;
+                if (perkCoef.randomQuantity === 0) {
+                    perkSetQuantity = [-1.0, perkCoef.quantRandMinPerc, perkCoef.quantRandMaxPerc];
+                } else {
+                    perkSetQuantity = [perkCoef.setQuantityPerc, -1.0, -1.0];
+                }
+
+                const transformedPerkCoef = {
+                    enableCoef: perkCoef.enableCoef,
+                    perkID: perkCoef.perkID,
+                    chanceToSpawn: 1.0,
+                    setCount: perkSetCount,
+                    setQuantity: perkSetQuantity,
+                    setHealth: perkSetQuantity  // setHealth = setQuantity
+                };
+                transformedData.perkCoefList.push(transformedPerkCoef);
+            });
+
+            return transformedData;
+        }
+
+        // Функция для обработки загруженного файла и преобразования данных
+        function processJson() {
+            const fileInput = document.getElementById('jsonFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Пожалуйста, выберите файл.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const jsonData = JSON.parse(event.target.result);
+                const transformedData = jsonData.map(transformPlantData);
+
+                document.getElementById('output').textContent = JSON.stringify(transformedData, null, 4);
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>
