@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Recipe Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+
+<h1>JSON Recipe Converter</h1>
+
+<textarea id="inputJson" placeholder="Вставьте ваш JSON конфиг здесь..."></textarea>
+<button onclick="convertJson()">Convert</button>
+
+<h2>Результат</h2>
+<pre id="outputJson"></pre>
+
+<script>
+function convertJson() {
+    const input = document.getElementById("inputJson").value;
+    try {
+        let parsedJson = JSON.parse(input);
+
+        // Если это не массив, обернуть его в массив
+        if (!Array.isArray(parsedJson)) {
+            parsedJson = [parsedJson];
+        }
+
+        const converted = parsedJson.map(recipe => ({
+            recipeUniqueID: recipe.recipeUniqueID,
+            m_NeedLiquid: recipe.m_NeedLiquid,
+            m_NeedBottleToCookIsKindOf: 1,
+            m_NeedBottleToCook: ["Bottle_Base"],
+            m_Ingredients: recipe.m_Ingredients,
+            m_IngredientsCount: recipe.m_IngredientsCount,
+            m_TimeToCooking: recipe.m_TimeToCooking,
+            m_ResultLiquid: convertResultLiquid(recipe.m_ResultLiquid),
+            m_ResultLiquidQuantity: recipe.m_ResultLiquidQuantity,
+            recipeName: recipe.recipeName,
+            NeedItemInHandToShow: [],
+            NeedItemInHandToShowDecreaseQH: [0.0, 0.0],
+            HideIsPerkNotActive: 1,
+            NeedPerkToCook: -1,
+            typeOfSkill: "MEDICAL",
+            pointsAddAfterCook: 0.0
+        }));
+
+        document.getElementById("outputJson").textContent = JSON.stringify(converted, null, 4);
+    } catch (error) {
+        document.getElementById("outputJson").textContent = "Ошибка при обработке JSON: " + error;
+    }
+}
+
+function convertResultLiquid(resultLiquid) {
+    // Пример преобразования, замените на свои правила
+    return resultLiquid === 67108864 ? 50009 : resultLiquid === 131072 ? 50000 : resultLiquid;
+}
+</script>
+
+</body>
+</html>
