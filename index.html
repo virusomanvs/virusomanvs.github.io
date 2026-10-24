@@ -444,7 +444,7 @@
 
   // ---------- WebXR: AR на Quest 3 ----------
   var xr = { active: false, mode: null, needsPlace: false, placing: true, yaw: 0, x: 0, z: 0, height: 0,
-    scaleIdx: 0, hand: {}, ctrls: [], hint: null, hintUntil: 0, prevBtn: {} };
+    scale: 1, grip: [false, false], grab: null, lbl: null, lblTxt: '', hand: {}, ctrls: [], hint: null, hintUntil: 0, prevBtn: {} };
   var SCALES = [1, 0.5, 0.2, 0.1];
   var rayMat = new T.LineBasicMaterial({ color: 0xffffff });
   function setupController(i) {
@@ -460,7 +460,8 @@
       raycaster.set(tmpV, tmpD);
       selectMesh(pickRay());
     });
-    c.addEventListener('squeezestart', function () { xr.placing = !xr.placing; });
+    c.addEventListener('squeezestart', function () { xr.grip[i] = true; xr.placing = false; if (xr.hint) xr.hintUntil = 0; });
+    c.addEventListener('squeezeend', function () { xr.grip[i] = false; });
     scene.add(c); xr.ctrls.push(c);
   }
   setupController(0); setupController(1);
@@ -474,13 +475,61 @@
   function applyPlacement() {
     pivot.position.set(xr.x, xr.height, xr.z);
     pivot.rotation.set(0, xr.yaw, 0);
-    pivot.scale.setScalar(SCALES[xr.scaleIdx]);
+    pivot.scale.setScalar(xr.scale);
   }
   function cycleScale() {
-    xr.scaleIdx = (xr.scaleIdx + 1) % SCALES.length;
-    var s = SCALES[xr.scaleIdx];
-    xr.height = s < 1 ? 0.8 : 0;   // уменьшенный макет ставим на высоту стола
+    var next = 1;
+    for (var k = 0; k < SCALES.length; k++) if (SCALES[k] < xr.scale * 0.98) { next = SCALES[k]; break; }
+    xr.scale = next;
+    if (next < 1 && xr.height < 0.3) xr.height = 0.8;   // уменьшенный макет ставим на высоту стола
+    if (next === 1) xr.height = 0;
     applyPlacement();
+  }
+  var gP0 = new T.Vector3(), gP1 = new T.Vector3();
+  function hideScale() {
+    if (!xr.lbl) return;
+    scene.remove(xr.lbl);
+    if (xr.lbl.material.map) xr.lbl.material.map.dispose();
+    xr.lbl.material.dispose(); xr.lbl = null; xr.lblTxt = '';
+  }
+  function showScale(s, mx, my, mz) {
+    var txt = s >= 0.95 ? '×' + s.toFixed(1) : '1:' + (1 / s).toFixed(1);
+    if (txt !== xr.lblTxt || !xr.lbl) {
+      hideScale(); xr.lblTxt = txt;
+      xr.lbl = textSprite(['масштаб ' + txt], '#ffd8a8', 0.16);
+      scene.add(xr.lbl);
+    }
+    xr.lbl.position.set(mx, my + 0.22, mz);
+  }
+  // хват: одной рукой переносим, двумя руками растягиваем (масштаб), крутим и переносим
+  function updateGrab() {
+    var a = xr.grip[0], b = xr.grip[1];
+    if (a && b) {
+      xr.ctrls[0].getWorldPosition(gP0); xr.ctrls[1].getWorldPosition(gP1);
+      var dist = gP0.distanceTo(gP1), ang = Math.atan2(gP1.x - gP0.x, gP1.z - gP0.z);
+      var mx = (gP0.x + gP1.x) / 2, my = (gP0.y + gP1.y) / 2, mz = (gP0.z + gP1.z) / 2;
+      if (!xr.grab || xr.grab.mode !== 'two') {
+        if (dist < 0.05) return;
+        xr.grab = { mode: 'two', d0: dist, sc0: xr.scale, a0: ang, yaw0: xr.yaw, ox: xr.x - mx, oy: xr.height - my, oz: xr.z - mz };
+        return;
+      }
+      var g = xr.grab, s = Math.min(3, Math.max(0.05, g.sc0 * dist / g.d0)), k = s / g.sc0;
+      var raw = ang - g.a0, da = Math.atan2(Math.sin(raw), Math.cos(raw)), cs = Math.cos(da), sn = Math.sin(da);
+      xr.scale = s; xr.yaw = g.yaw0 + da;
+      xr.x = mx + (g.ox * cs + g.oz * sn) * k;
+      xr.z = mz + (g.oz * cs - g.ox * sn) * k;
+      xr.height = Math.max(0, my + g.oy * k);
+      showScale(s, mx, my, mz);
+    } else if (a || b) {
+      var idx = a ? 0 : 1;
+      xr.ctrls[idx].getWorldPosition(gP0);
+      if (!xr.grab || xr.grab.mode !== 'one' || xr.grab.i !== idx) {
+        xr.grab = { mode: 'one', i: idx, ox: xr.x - gP0.x, oy: xr.height - gP0.y, oz: xr.z - gP0.z };
+      } else {
+        xr.x = gP0.x + xr.grab.ox; xr.z = gP0.z + xr.grab.oz; xr.height = Math.max(0, gP0.y + xr.grab.oy);
+      }
+      hideScale();
+    } else { xr.grab = null; hideScale(); }
   }
   function buttonEdge(key, pressed, fn) {
     if (pressed && !xr.prevBtn[key]) fn();
@@ -492,10 +541,11 @@
     if (xr.needsPlace && hp.p.y > 0.3) {
       var f = hp.d.clone(); f.y = 0; if (f.lengthSq() < 1e-4) f.set(0, 0, -1); f.normalize();
       xr.x = hp.p.x + f.x * 3.4; xr.z = hp.p.z + f.z * 3.4; xr.yaw = Math.atan2(-f.x, -f.z);
-      xr.height = 0; xr.scaleIdx = 0; xr.needsPlace = false; xr.placing = true;
+      xr.height = 0; xr.scale = 1; xr.needsPlace = false; xr.placing = true;
       applyPlacement();
-      xr.hint = textSprite(['Котельная 3x2 м, масштаб 1:1', 'Курок: поставить, затем размер детали', 'Хват: снова переставить модель', 'Левый стик: двигать',
-        'Правый стик: поворот, высота; нажатие: сборка', 'A: масштаб   B: крыша   X: стены   Y: размеры'], '#f5f5f5', 0.5);
+      xr.hint = textSprite(['Котельная 3x2 м, масштаб 1:1', 'Хват одной рукой: переносить', 'Хват двумя руками: масштаб и поворот',
+        'Курок: поставить, затем размер детали', 'Левый стик: двигать (нажатие: сброс)', 'Правый стик: поворот, высота (нажатие: сборка)',
+        'A: масштаб 1:2/1:5/1:10   B: крыша   X: стены   Y: размеры'], '#f5f5f5', 0.55);
       xr.hint.position.set(hp.p.x + f.x * 1.2, Math.max(1.0, hp.p.y - 0.25), hp.p.z + f.z * 1.2);
       scene.add(xr.hint); xr.hintUntil = performance.now() + 25000;
     }
@@ -516,6 +566,7 @@
         xr.x += (f2.x * -sy + rt.x * sx) * 1.2 * dt; xr.z += (f2.z * -sy + rt.z * sx) * 1.2 * dt;
         buttonEdge('lx', !!(bt[4] && bt[4].pressed), function () { setLayer('walls', !state.walls); });
         buttonEdge('ly', !!(bt[5] && bt[5].pressed), function () { setLayer('dims', !state.dims); });
+        buttonEdge('ls', !!(bt[3] && bt[3].pressed), function () { xr.scale = 1; xr.height = 0; });
       } else if (h === 'right') {
         xr.yaw -= sx * 1.4 * dt;
         xr.height = Math.min(2.2, Math.max(0, xr.height - sy * 0.6 * dt));
@@ -524,6 +575,7 @@
         buttonEdge('rs', !!(bt[3] && bt[3].pressed), function () { if (asm.playing) stopAsm(); else startAsm(); });
       }
     }
+    updateGrab();
     if (xr.placing && rightCtrl) {
       rightCtrl.getWorldPosition(tmpV);
       rightCtrl.getWorldQuaternion(tmpQ);
@@ -544,7 +596,7 @@
     $('ui').hidden = true;
   });
   renderer.xr.addEventListener('sessionend', function () {
-    inXR = false; xr.active = false; xr.mode = null;
+    inXR = false; xr.active = false; xr.mode = null; xr.grab = null; xr.grip = [false, false]; hideScale();
     if (xr.hint) { scene.remove(xr.hint); xr.hint = null; }
     pivot.position.set(1.5, 0, -1.0); pivot.rotation.set(0, 0, 0); pivot.scale.setScalar(1);
     grid.visible = true; applyBackground(); renderer.setClearAlpha(1);
