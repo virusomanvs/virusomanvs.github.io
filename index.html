@@ -1,44 +1,614 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>config_EntityLists.json Converter 2408</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            text-align: center;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            margin-bottom: 20px;
-        }
-        #downloadLink {
-            margin-top: 20px;
-            display: block;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>config_EntityLists Converter</h1>
-        <div class="form-group">
-            <input type="file" id="inputFile" class="form-control-file" accept=".json">
-        </div>
-        <button class="btn btn-primary" onclick="convertFile()">Convert</button>
-        <a id="downloadLink" class="btn btn-success" style="display: none;">Download Converted JSON</a>
-    </div>
+<title>Котельная 3×2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Макет: полноэкранная 3D-сцена, сверху название и кнопки AR/VR, снизу переключатели слоёв и видов. */
+  :root {
+    --bg: #e9ecef; --scene: #dfe4e9; --panel: #ffffff; --fg: #1d2329; --muted: #5d6874;
+    --line: #c6cdd5; --accent: #c4561b; --accent-fg: #ffffff;
+    --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12161a; --scene: #1b2026; --panel: #232a31; --fg: #eaeef2; --muted: #9aa5b1;
+      --line: #38424c; --accent: #f08a4b; --accent-fg: #1b1208; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12161a; --scene: #1b2026; --panel: #232a31; --fg: #eaeef2; --muted: #9aa5b1;
+    --line: #38424c; --accent: #f08a4b; --accent-fg: #1b1208; color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; background: var(--scene); }
+  #ui {
+    position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: space-between;
+    padding-block: 12px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    pointer-events: none;
+  }
+  #ui > * { pointer-events: none; }
+  .title, .xr, #status, .row, #info { pointer-events: auto; }
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  h1 { margin: 0; font-size: 1.05rem; font-weight: 600; line-height: 1.2; }
+  h1 small { display: block; font: 500 0.72rem/1.4 var(--mono); color: var(--muted); letter-spacing: 0.02em; margin-top: 2px; }
+  .title { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; min-width: 0; }
+  .xr { display: flex; gap: 8px; }
+  button {
+    font: 600 0.85rem var(--font); color: var(--fg); background: var(--panel); border: 1px solid var(--line);
+    border-radius: 999px; padding: 9px 14px; min-height: 40px; cursor: pointer;
+  }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:disabled { opacity: 0.45; cursor: default; }
+  #btn-ar { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  #status {
+    align-self: flex-start; max-width: min(34rem, 100%); background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 8px 12px; font-size: 0.8rem; line-height: 1.4; color: var(--muted);
+  }
+  #info { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; display: grid; gap: 2px; max-width: min(30rem, 100%); }
+  #info strong { font-size: 0.88rem; font-weight: 600; line-height: 1.3; }
+  #info-size { font: 600 1.1rem var(--mono); color: var(--accent); }
+  #info-mat { font-size: 0.75rem; color: var(--muted); }
+  footer { display: flex; flex-direction: column; gap: 8px; }
+  .row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+  .row::-webkit-scrollbar { display: none; }
+  .row button { flex: none; font-weight: 500; font-size: 0.8rem; padding: 7px 12px; min-height: 36px; }
+  .row .lbl { flex: none; align-self: center; font: 500 0.68rem var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-right: 2px; }
+  button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  @media (prefers-reduced-motion: no-preference) { button { transition: background 0.12s, color 0.12s; } }
+</style>
 
-    <script src="script.js"></script>
-</body>
-</html>
+<canvas id="stage" aria-label="3D-модель котельной"></canvas>
+<div id="ui">
+  <header>
+    <div class="title"><h1>Котельная 3×2 м<small>15 брусьев 50×100×6000 · котёл ВКВ-15</small></h1></div>
+    <div class="xr">
+      <button id="btn-ar" type="button" disabled>AR на Quest</button>
+      <button id="btn-vr" type="button" disabled>VR</button>
+    </div>
+  </header>
+  <div id="status" role="status">Загружаю 3D…</div>
+  <footer>
+    <div id="info" hidden><strong id="info-name"></strong><span id="info-size"></span><span id="info-mat"></span></div>
+    <div class="row" role="group" aria-label="Вид">
+      <span class="lbl">Вид</span>
+      <button type="button" data-view="front">Фасад</button>
+      <button type="button" data-view="top">План</button>
+      <button type="button" data-view="inside">Изнутри</button>
+    </div>
+    <div class="row" role="group" aria-label="Режим">
+      <span class="lbl">Режим</span>
+      <button type="button" id="btn-measure" aria-pressed="false">Размер детали</button>
+      <button type="button" id="btn-asm" aria-pressed="false">Сборка</button>
+    </div>
+    <div class="row" role="group" aria-label="Слои">
+      <span class="lbl">Слои</span>
+      <button type="button" data-layer="roof" aria-pressed="true">Крыша</button>
+      <button type="button" data-layer="walls" aria-pressed="true">Стены</button>
+      <button type="button" data-layer="floor" aria-pressed="true">Пол</button>
+      <button type="button" data-layer="supports" aria-pressed="true">Опоры</button>
+      <button type="button" data-layer="boiler" aria-pressed="true">Котёл</button>
+      <button type="button" data-layer="dims" aria-pressed="true">Размеры</button>
+    </div>
+  </footer>
+</div>
+
+<script>window.__SPEC__ = {"mats":{"concrete":{"color":"#9b9b97","rough":0.95},"joist":{"color":"#c9985a","rough":0.85},"plank":{"color":"#bf9e6e","rough":0.85},"board":{"color":"#a9814f","rough":0.85},"csp":{"color":"#b8b8b0","rough":0.9},"steel":{"color":"#6f7680","rough":0.5},"lumber":{"color":"#d8b07a","rough":0.85},"lumber2":{"color":"#e3c08d","rough":0.85},"purlin":{"color":"#cfa86f","rough":0.85},"sheet":{"color":"#7b3f33","rough":0.6},"boiler":{"color":"#2f4256","rough":0.55},"boilerlight":{"color":"#58667a","rough":0.55},"door":{"color":"#3b3f46","rough":0.6},"black":{"color":"#1f2328","rough":0.6},"flue":{"color":"#b9bec6","rough":0.45},"pipeBlue":{"color":"#2f6fb3","rough":0.5},"pipeRed":{"color":"#c0392b","rough":0.5}},"items":[{"g":"supports","m":"concrete","k":"box","n":"Опора 200x200","c":[0.1,0.175,-0.1],"s":[0.2,0.35,0.2],"rx":0.0},{"g":"supports","m":"concrete","k":"box","n":"Опора 200x200","c":[0.1,0.175,-1.9],"s":[0.2,0.35,0.2],"rx":0.0},{"g":"supports","m":"concrete","k":"box","n":"Опора 200x200","c":[1.5,0.175,-0.1],"s":[0.2,0.35,0.2],"rx":0.0},{"g":"supports","m":"concrete","k":"box","n":"Опора 200x200","c":[1.5,0.175,-1.9],"s":[0.2,0.35,0.2],"rx":0.0},{"g":"supports","m":"concrete","k":"box","n":"Опора 200x200","c":[2.9,0.175,-0.1],"s":[0.2,0.35,0.2],"rx":0.0},{"g":"supports","m":"concrete","k":"box","n":"Опора 200x200","c":[2.9,0.175,-1.9],"s":[0.2,0.35,0.2],"rx":0.0},{"g":"supports","m":"concrete","k":"box","n":"Опора под котёл","c":[0.5,0.175,-1.0],"s":[0.2,0.35,0.2],"rx":0.0},{"g":"supports","m":"concrete","k":"box","n":"Опора под котёл","c":[1.1,0.175,-1.0],"s":[0.2,0.35,0.2],"rx":0.0},{"g":"floor","m":"plank","k":"box","n":"Обвязка пола (доска 40x150)","c":[1.5,0.425,-0.02],"s":[3.0,0.15,0.04],"rx":0.0},{"g":"floor","m":"plank","k":"box","n":"Обвязка пола (доска 40x150)","c":[1.5,0.425,-1.98],"s":[3.0,0.15,0.04],"rx":0.0},{"g":"floor","m":"plank","k":"box","n":"Лага крайняя (доска)","c":[0.02,0.425,-1.0],"s":[0.04,0.15,1.92],"rx":0.0},{"g":"floor","m":"plank","k":"box","n":"Лага крайняя (доска)","c":[0.06,0.425,-1.0],"s":[0.04,0.15,1.92],"rx":0.0},{"g":"floor","m":"plank","k":"box","n":"Лага крайняя (доска)","c":[2.94,0.425,-1.0],"s":[0.04,0.15,1.92],"rx":0.0},{"g":"floor","m":"plank","k":"box","n":"Лага крайняя (доска)","c":[2.98,0.425,-1.0],"s":[0.04,0.15,1.92],"rx":0.0},{"g":"floor","m":"plank","k":"box","n":"Лага под котёл (доска)","c":[0.5,0.425,-1.0],"s":[0.04,0.15,1.92],"rx":0.0},{"g":"floor","m":"plank","k":"box","n":"Лага под котёл (доска)","c":[0.8,0.425,-1.0],"s":[0.04,0.15,1.92],"rx":0.0},{"g":"floor","m":"plank","k":"box","n":"Лага под котёл (доска)","c":[1.1,0.425,-1.0],"s":[0.04,0.15,1.92],"rx":0.0},{"g":"floor","m":"plank","k":"box","n":"Лага рядовая (доска)","c":[1.7,0.425,-1.0],"s":[0.04,0.15,1.92],"rx":0.0},{"g":"floor","m":"plank","k":"box","n":"Лага рядовая (доска)","c":[2.3,0.425,-1.0],"s":[0.04,0.15,1.92],"rx":0.0},{"g":"floor","m":"board","k":"box","n":"Настил 40","c":[1.5,0.52,-1.0],"s":[3.0,0.04,2.0],"rx":0.0},{"g":"floor","m":"csp","k":"box","n":"ЦСП 2x12","c":[0.8,0.552,-0.775],"s":[1.2,0.024,1.35],"rx":0.0},{"g":"floor","m":"steel","k":"box","n":"Стальной лист","c":[0.8,0.5655,-0.75],"s":[1.0,0.003,1.3],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-2","c":[0.37,0.565,-0.05],"s":[0.74,0.05,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-2","c":[2.32,0.565,-0.05],"s":[1.36,0.05,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-1","c":[1.5,2.915,-0.05],"s":[3.0,0.05,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-3","c":[0.025,1.74,-0.05],"s":[0.05,2.3,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-3","c":[0.665,1.74,-0.05],"s":[0.05,2.3,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-3","c":[1.715,1.74,-0.05],"s":[0.05,2.3,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-3","c":[2.355,1.74,-0.05],"s":[0.05,2.3,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-3","c":[2.665,1.74,-0.05],"s":[0.05,2.3,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-3","c":[2.975,1.74,-0.05],"s":[0.05,2.3,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-4","c":[0.715,1.615,-0.05],"s":[0.05,2.05,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-4","c":[1.665,1.615,-0.05],"s":[0.05,2.05,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-5","c":[1.19,2.665,-0.05],"s":[1.0,0.05,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-6","c":[1.19,2.74,-0.025],"s":[1.0,0.1,0.05],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-6","c":[1.19,2.74,-0.075],"s":[1.0,0.1,0.05],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-7","c":[0.715,2.84,-0.05],"s":[0.05,0.1,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С1-7","c":[1.665,2.84,-0.05],"s":[0.05,0.1,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С2-2","c":[1.5,0.565,-1.95],"s":[3.0,0.05,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С2-1","c":[1.5,2.515,-1.95],"s":[3.0,0.05,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С2-3","c":[0.025,1.54,-1.95],"s":[0.05,1.9,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С2-3","c":[0.525,1.54,-1.95],"s":[0.05,1.9,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С2-3","c":[1.175,1.54,-1.95],"s":[0.05,1.9,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С2-3","c":[1.815,1.54,-1.95],"s":[0.05,1.9,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С2-3","c":[2.455,1.54,-1.95],"s":[0.05,1.9,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С2-3","c":[2.975,1.54,-1.95],"s":[0.05,1.9,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С2-4","c":[0.85,1.365,-1.95],"s":[0.6,0.05,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С2-4","c":[0.85,2.015,-1.95],"s":[0.6,0.05,0.1],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С3-1","c":[0.05,0.565,-1.0],"s":[0.1,0.05,1.8],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С3-2","nom":1845,"c":[0.05,2.71549,-0.9951],"s":[0.1,0.05,1.83565],"rx":-0.1974},{"g":"walls","m":"lumber","k":"box","n":"С3-3 стойка","nom":2300,"c":[0.05,1.7295,-0.125],"s":[0.1,2.27901,0.05],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С3-4 стойка","nom":2170,"c":[0.05,1.6655,-0.765],"s":[0.1,2.15101,0.05],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С3-5 стойка","nom":2035,"c":[0.05,1.6015,-1.405],"s":[0.1,2.02301,0.05],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С3-6 стойка","nom":1900,"c":[0.05,1.5545,-1.875],"s":[0.1,1.92901,0.05],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С3-1","c":[2.95,0.565,-1.0],"s":[0.1,0.05,1.8],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С3-2","nom":1845,"c":[2.95,2.71549,-0.9951],"s":[0.1,0.05,1.83565],"rx":-0.1974},{"g":"walls","m":"lumber","k":"box","n":"С3-3 стойка","nom":2300,"c":[2.95,1.7295,-0.125],"s":[0.1,2.27901,0.05],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С3-4 стойка","nom":2170,"c":[2.95,1.6655,-0.765],"s":[0.1,2.15101,0.05],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С3-5 стойка","nom":2035,"c":[2.95,1.6015,-1.405],"s":[0.1,2.02301,0.05],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С3-6 стойка","nom":1900,"c":[2.95,1.5545,-1.875],"s":[0.1,1.92901,0.05],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С3-7","c":[2.95,1.865,-1.085],"s":[0.1,0.05,0.59],"rx":0.0},{"g":"walls","m":"lumber","k":"box","n":"С3-7","c":[2.95,2.415,-1.085],"s":[0.1,0.05,0.59],"rx":0.0},{"g":"roof","m":"lumber","k":"box","n":"К-1 стропило","c":[0.025,2.80272,-0.94136],"s":[0.05,0.1,3.0],"rx":-0.1974},{"g":"roof","m":"lumber","k":"box","n":"К-1 стропило","c":[0.615,2.80272,-0.94136],"s":[0.05,0.1,3.0],"rx":-0.1974},{"g":"roof","m":"lumber","k":"box","n":"К-1 стропило","c":[1.205,2.80272,-0.94136],"s":[0.05,0.1,3.0],"rx":-0.1974},{"g":"roof","m":"lumber","k":"box","n":"К-1 стропило","c":[1.795,2.80272,-0.94136],"s":[0.05,0.1,3.0],"rx":-0.1974},{"g":"roof","m":"lumber","k":"box","n":"К-1 стропило","c":[2.385,2.80272,-0.94136],"s":[0.05,0.1,3.0],"rx":-0.1974},{"g":"roof","m":"lumber","k":"box","n":"К-1 стропило","c":[2.975,2.80272,-0.94136],"s":[0.05,0.1,3.0],"rx":-0.1974},{"g":"roof","m":"lumber2","k":"box","n":"К-2 лобовая (доска 25x100)","c":[1.5,3.09934,0.54177],"s":[3.0,0.1,0.025],"rx":-0.1974},{"g":"roof","m":"lumber2","k":"box","n":"К-2 лобовая (доска 25x100)","c":[1.5,2.50609,-2.42449],"s":[3.0,0.1,0.025],"rx":-0.1974},{"g":"roof","m":"purlin","k":"box","n":"Обрешётка","c":[1.5,3.14837,0.46823],"s":[3.0,0.025,0.1],"rx":-0.1974},{"g":"roof","m":"purlin","k":"box","n":"Обрешётка","c":[1.5,3.05228,-0.01226],"s":[3.0,0.025,0.1],"rx":-0.1974},{"g":"roof","m":"purlin","k":"box","n":"Обрешётка","c":[1.5,2.95618,-0.49274],"s":[3.0,0.025,0.1],"rx":-0.1974},{"g":"roof","m":"purlin","k":"box","n":"Обрешётка","c":[1.5,2.86008,-0.97323],"s":[3.0,0.025,0.1],"rx":-0.1974},{"g":"roof","m":"purlin","k":"box","n":"Обрешётка","c":[1.5,2.76399,-1.45371],"s":[3.0,0.025,0.1],"rx":-0.1974},{"g":"roof","m":"purlin","k":"box","n":"Обрешётка","c":[1.5,2.66789,-1.9342],"s":[3.0,0.025,0.1],"rx":-0.1974},{"g":"roof","m":"purlin","k":"box","n":"Обрешётка","c":[1.5,2.57179,-2.41468],"s":[3.0,0.025,0.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Профнастил","c":[0.5,2.87675,-0.95616],"s":[1.0,0.001,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[0.05,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[0.15,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[0.25,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[0.35,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[0.45,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[0.55,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[0.65,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[0.75,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[0.85,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[0.95,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Профнастил","c":[1.5,2.87675,-0.95616],"s":[1.0,0.001,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[1.05,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[1.15,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[1.25,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[1.35,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[1.45,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[1.55,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[1.65,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[1.75,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[1.85,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[1.95,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Профнастил","c":[2.5,2.87675,-0.95616],"s":[1.0,0.001,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[2.05,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[2.15,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[2.25,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[2.35,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[2.45,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[2.55,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[2.65,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[2.75,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[2.85,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"roof","m":"sheet","k":"box","n":"Гофра","c":[2.95,2.88705,-0.95822],"s":[0.04,0.02,3.1],"rx":-0.1974},{"g":"boiler","m":"boiler","k":"box","n":"Корпус ВКВ-15","c":[0.8,1.117,-0.825],"s":[0.6,1.1,1.05],"rx":0.0},{"g":"boiler","m":"boilerlight","k":"box","n":"Крышка","c":[0.8,1.6745,-0.825],"s":[0.61,0.015,1.06],"rx":0.0},{"g":"boiler","m":"door","k":"box","n":"Загрузочная дверца","c":[0.8,1.377,-0.29],"s":[0.52,0.38,0.02],"rx":0.0},{"g":"boiler","m":"black","k":"box","n":"Ручка","c":[1.02,1.367,-0.271],"s":[0.04,0.02,0.018],"rx":0.0},{"g":"boiler","m":"door","k":"box","n":"Зольная дверца","c":[0.8,0.787,-0.2925],"s":[0.52,0.28,0.015],"rx":0.0},{"g":"boiler","m":"black","k":"box","n":"Ручка","c":[1.02,0.787,-0.276],"s":[0.04,0.02,0.018],"rx":0.0},{"g":"boiler","m":"boilerlight","k":"box","n":"Автоматика и вентилятор","c":[0.8,1.767,-1.19],"s":[0.48,0.17,0.28],"rx":0.0},{"g":"boiler","m":"pipeBlue","k":"cyl","n":"Обратка слева","axis":"x","c":[0.47,0.767,-1.0],"r":0.024,"h":0.06},{"g":"boiler","m":"pipeBlue","k":"cyl","n":"Обратка справа","axis":"x","c":[1.13,0.767,-1.0],"r":0.024,"h":0.06},{"g":"boiler","m":"pipeRed","k":"cyl","n":"Подача","axis":"y","c":[0.9,1.807,-0.8],"r":0.024,"h":0.25},{"g":"flue","m":"flue","k":"cyl","n":"Дымоход d159","axis":"z","c":[0.8,1.54,-1.775],"r":0.0795,"h":0.85},{"g":"flue","m":"black","k":"cyl","n":"Шибер/ревизия","axis":"z","c":[0.8,1.54,-1.5],"r":0.095,"h":0.02},{"g":"flue","m":"flue","k":"sph","n":"","c":[0.8,1.54,-2.2],"r":0.0795},{"g":"flue","m":"flue","k":"cyl","n":"Дымоход вертикаль","axis":"y","c":[0.8,2.64,-2.2],"r":0.0795,"h":2.2}],"dims":[{"color":"#f5f5f5","text":"длина 3000","segs":[[[0.0,0.54,0.3],[3.0,0.54,0.3]],[[0.0,0.54,0.36],[0.0,0.54,0.24]],[[3.0,0.54,0.36],[3.0,0.54,0.24]]],"mid":[1.5,0.54,0.3]},{"color":"#f5f5f5","text":"глубина 2000","segs":[[[-0.3,0.54,-0.0],[-0.3,0.54,-2.0]],[[-0.36,0.54,-0.0],[-0.24,0.54,-0.0]],[[-0.36,0.54,-2.0],[-0.24,0.54,-2.0]]],"mid":[-0.3,0.54,-1.0]},{"color":"#f5f5f5","text":"перед 2400","segs":[[[-0.3,0.54,0.3],[-0.3,2.94,0.3]],[[-0.36,0.54,0.3],[-0.24,0.54,0.3]],[[-0.36,2.94,0.3],[-0.24,2.94,0.3]]],"mid":[-0.3,1.74,0.3]},{"color":"#f5f5f5","text":"зад 2000","segs":[[[-0.3,0.54,-2.3],[-0.3,2.54,-2.3]],[[-0.36,0.54,-2.3],[-0.24,0.54,-2.3]],[[-0.36,2.54,-2.3],[-0.24,2.54,-2.3]]],"mid":[-0.3,1.54,-2.3]},{"color":"#f5f5f5","text":"дверь 900","segs":[[[0.74,0.54,0.12],[1.64,0.54,0.12]],[[0.74,0.54,0.17],[0.74,0.54,0.07]],[[1.64,0.54,0.17],[1.64,0.54,0.07]]],"mid":[1.19,0.54,0.12]},{"color":"#f5f5f5","text":"400","segs":[[[0.1,0.585,-0.8],[0.5,0.585,-0.8]],[[0.1,0.585,-0.75],[0.1,0.585,-0.85]],[[0.5,0.585,-0.75],[0.5,0.585,-0.85]]],"mid":[0.3,0.585,-0.8]},{"color":"#f5f5f5","text":"550","segs":[[[1.2,0.585,-1.35],[1.2,0.585,-1.9]],[[1.15,0.585,-1.35],[1.25,0.585,-1.35]],[[1.15,0.585,-1.9],[1.25,0.585,-1.9]]],"mid":[1.2,0.585,-1.625]},{"color":"#e5484d","text":"200 (в проекте 1200)","segs":[[[0.8,0.585,-0.1],[0.8,0.585,-0.3]],[[0.75,0.585,-0.1],[0.85,0.585,-0.1]],[[0.75,0.585,-0.3],[0.85,0.585,-0.3]]],"mid":[0.8,0.585,-0.2]},{"color":"#f5f5f5","text":"1800","segs":[[[1.1,0.585,-0.8],[2.9,0.585,-0.8]],[[1.1,0.585,-0.75],[1.1,0.585,-0.85]],[[2.9,0.585,-0.75],[2.9,0.585,-0.85]]],"mid":[2.0,0.585,-0.8]}],"labels":[{"pos":[0.8,2.09,-0.8],"text":"Котёл ВКВ-15 1050x600x1100","color":"#f5f5f5"},{"pos":[0.8,3.92,-2.2],"text":"Дымоход d159","color":"#f5f5f5"}],"F":0.54,"theta":0.19739555984988075};</script>
+<script>function boot(SPEC) {
+  var T = window.THREE;
+  var $ = function (id) { return document.getElementById(id); };
+  var statusEl = $('status');
+  function say(msg) { statusEl.textContent = msg || ''; statusEl.hidden = !msg; }
+
+  // ---------- renderer / scene ----------
+  var canvas = $('stage');
+  var renderer = new T.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.xr.enabled = true;
+  var scene = new T.Scene();
+  var camera = new T.PerspectiveCamera(50, 1, 0.05, 80);
+
+  function sceneColor() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue('--scene').trim();
+    return new T.Color(v || '#1b2026');
+  }
+  var inXR = false;
+  function applyBackground() { scene.background = inXR ? null : sceneColor(); }
+  applyBackground();
+  if (window.matchMedia) {
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    if (mq.addEventListener) mq.addEventListener('change', function () { setTimeout(applyBackground, 30); });
+  }
+
+  scene.add(new T.HemisphereLight(0xffffff, 0x6a6f78, 0.95));
+  var sun = new T.DirectionalLight(0xffffff, 1.5); sun.position.set(4, 9, 6); scene.add(sun);
+  var fill = new T.DirectionalLight(0xffffff, 0.55); fill.position.set(-5, 4, -6); scene.add(fill);
+
+  var grid = new T.GridHelper(14, 28, 0x7d8794, 0x4a525c);
+  grid.position.set(1.5, 0, -1);
+  grid.material.transparent = true; grid.material.opacity = 0.45;
+  scene.add(grid);
+
+  // ---------- model ----------
+  var mats = {};
+  Object.keys(SPEC.mats).forEach(function (k) {
+    mats[k] = new T.MeshStandardMaterial({ color: new T.Color(SPEC.mats[k].color), roughness: SPEC.mats[k].rough, metalness: 0.05 });
+  });
+  var edgeMat = new T.LineBasicMaterial({ color: 0x5a3d1c, transparent: true, opacity: 0.5 });
+  var EDGE = { lumber: 1, lumber2: 1, joist: 1, plank: 1, purlin: 1 };
+
+  var groups = {};
+  ['supports', 'floor', 'walls', 'roof', 'boiler', 'flue', 'dims'].forEach(function (n) {
+    groups[n] = new T.Group(); groups[n].name = n;
+  });
+  var model = new T.Group();
+  Object.keys(groups).forEach(function (n) { model.add(groups[n]); });
+  model.position.set(-1.5, 0, 1.0);          // центр основания модели -> начало pivot
+  var pivot = new T.Group();
+  pivot.add(model);
+  scene.add(pivot);
+
+  var pickables = [];
+  SPEC.items.forEach(function (it) {
+    var geo;
+    if (it.k === 'box') geo = new T.BoxGeometry(it.s[0], it.s[1], it.s[2]);
+    else if (it.k === 'cyl') geo = new T.CylinderGeometry(it.r, it.r, it.h, 24);
+    else geo = new T.SphereGeometry(it.r, 20, 14);
+    var mesh = new T.Mesh(geo, mats[it.m]);
+    mesh.position.set(it.c[0], it.c[1], it.c[2]);
+    if (it.k === 'box') mesh.rotation.x = it.rx;
+    if (it.k === 'cyl') {
+      if (it.axis === 'x') mesh.rotation.z = Math.PI / 2;
+      else if (it.axis === 'z') mesh.rotation.x = Math.PI / 2;
+    }
+    if (it.n) mesh.name = it.n;
+    if (it.k === 'box' && EDGE[it.m]) {
+      mesh.add(new T.LineSegments(new T.EdgesGeometry(geo), edgeMat));
+    }
+    mesh.userData.it = it; pickables.push(mesh);
+    groups[it.g].add(mesh);
+  });
+
+  // размеры: тонкие цилиндры вместо линий (линии в WebGL всегда 1 px)
+  var UP = new T.Vector3(0, 1, 0);
+  function bar(a, b, color, r) {
+    var A = new T.Vector3().fromArray(a), B = new T.Vector3().fromArray(b);
+    var d = new T.Vector3().subVectors(B, A), len = d.length();
+    var m = new T.Mesh(new T.CylinderGeometry(r, r, len, 6),
+      new T.MeshBasicMaterial({ color: new T.Color(color), depthTest: false, transparent: true }));
+    m.position.copy(A).addScaledVector(d, 0.5);
+    m.quaternion.setFromUnitVectors(UP, d.normalize());
+    m.renderOrder = 9;
+    return m;
+  }
+  function textSprite(lines, color, h) {
+    var c = document.createElement('canvas'), g = c.getContext('2d');
+    var fs = 44, pad = 22, font = 'bold ' + fs + 'px "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
+    g.font = font;
+    var w = 0; lines.forEach(function (s) { w = Math.max(w, g.measureText(s).width); });
+    c.width = Math.ceil(w + pad * 2); c.height = Math.ceil(lines.length * fs * 1.25 + pad * 2);
+    g.font = font; g.textBaseline = 'top';
+    g.fillStyle = 'rgba(16,20,24,0.88)';
+    var r = 18, W = c.width, H = c.height;
+    g.beginPath(); g.moveTo(r, 0); g.arcTo(W, 0, W, H, r); g.arcTo(W, H, 0, H, r); g.arcTo(0, H, 0, 0, r); g.arcTo(0, 0, W, 0, r); g.closePath(); g.fill();
+    g.fillStyle = color || '#f5f5f5';
+    lines.forEach(function (s, i) { g.fillText(s, pad, pad + i * fs * 1.25); });
+    var tex = new T.CanvasTexture(c);
+    var sp = new T.Sprite(new T.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+    sp.scale.set(h * W / H, h, 1);
+    sp.renderOrder = 10;
+    return sp;
+  }
+  SPEC.dims.forEach(function (d) {
+    d.segs.forEach(function (s) { groups.dims.add(bar(s[0], s[1], d.color, 0.006)); });
+    var sp = textSprite([d.text], d.color, 0.15);
+    sp.position.fromArray(d.mid); sp.position.y += 0.12;
+    groups.dims.add(sp);
+  });
+  SPEC.labels.forEach(function (l) {
+    var sp = textSprite([l.text], l.color, 0.15);
+    sp.position.fromArray(l.pos);
+    groups.dims.add(sp);
+  });
+
+  // ---------- переключатели слоёв ----------
+  var layers = {
+    roof: [groups.roof], walls: [groups.walls], floor: [groups.floor],
+    supports: [groups.supports], boiler: [groups.boiler, groups.flue], dims: [groups.dims]
+  };
+  var state = { roof: true, walls: true, floor: true, supports: true, boiler: true, dims: true };
+  function setLayer(k, on) {
+    state[k] = on;
+    layers[k].forEach(function (g) { g.visible = on; });
+    var b = document.querySelector('[data-layer="' + k + '"]');
+    if (b) b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-layer]'), function (b) {
+    b.addEventListener('click', function () { var k = b.getAttribute('data-layer'); setLayer(k, !state[k]); });
+  });
+
+  // ---------- камера: вращение / масштаб / сдвиг ----------
+  var cam = { theta: 0.62, phi: 1.2, r: 9, target: new T.Vector3(1.5, 1.4, -1.0) };
+  function applyCam() {
+    var sp = Math.sin(cam.phi), cp = Math.cos(cam.phi);
+    camera.position.set(cam.target.x + cam.r * sp * Math.sin(cam.theta), cam.target.y + cam.r * cp,
+      cam.target.z + cam.r * sp * Math.cos(cam.theta));
+    camera.lookAt(cam.target);
+  }
+  function camFrom(pos, target) {
+    var d = new T.Vector3().subVectors(pos, target);
+    cam.r = d.length(); cam.phi = Math.acos(d.y / cam.r); cam.theta = Math.atan2(d.x, d.z);
+    cam.target.copy(target);
+  }
+  var presets = {
+    front: function () { cam.theta = 0.62; cam.phi = 1.2; cam.r = 9; cam.target.set(1.5, 1.4, -1.0); setLayer('roof', true); },
+    top: function () { cam.theta = 0; cam.phi = 0.06; cam.r = 7.5; cam.target.set(1.5, 0.6, -1.0); setLayer('roof', false); },
+    inside: function () { camFrom(new T.Vector3(2.5, 1.6, -0.45), new T.Vector3(0.8, 1.0, -1.15)); setLayer('roof', true); }
+  };
+  Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) {
+    b.addEventListener('click', function () { presets[b.getAttribute('data-view')](); applyCam(); });
+  });
+  presets.front(); applyCam();
+
+  // ---------- выбор детали и размеры ----------
+  var MATNAME = { lumber: 'брус 50×100', joist: 'брус 50×100', lumber2: 'доска 25×100', purlin: 'доска 25×100', plank: 'доска 40×150',
+    board: 'доска 40×150 (настил)', concrete: 'бетон', csp: 'ЦСП 2×12', steel: 'сталь 3 мм', sheet: 'профнастил С-21',
+    boiler: 'котёл ВКВ-15', boilerlight: 'котёл ВКВ-15', door: 'котёл ВКВ-15', black: 'котёл ВКВ-15', flue: 'труба Ø159',
+    pipeBlue: 'патрубок обратки', pipeRed: 'патрубок подачи' };
+  var CODE = { 'С1-1': 'верхняя обвязка передней стены', 'С1-2': 'нижняя обвязка передней стены', 'С1-3': 'стойка передней стены',
+    'С1-4': 'джек-стойка проёма двери', 'С1-5': 'перемычка двери', 'С1-6': 'ригель над дверью (на ребро)', 'С1-7': 'короткая стойка над дверью',
+    'С2-1': 'верхняя обвязка задней стены', 'С2-2': 'нижняя обвязка задней стены', 'С2-3': 'стойка задней стены', 'С2-4': 'перемычка проёма дымохода',
+    'С3-1': 'нижняя обвязка боковой стены', 'С3-2': 'верхняя наклонная обвязка', 'С3-3': 'передняя стойка боковой стены',
+    'С3-4': 'средняя стойка боковой стены', 'С3-5': 'средняя стойка боковой стены', 'С3-6': 'задняя стойка боковой стены',
+    'С3-7': 'перемычка окна', 'К-1': 'стропильная нога' };
+  var measure = false, selected = null, pickSprite = null;
+  var hiMat = new T.MeshStandardMaterial({ color: 0xff7a1a, emissive: 0x7a3300, roughness: 0.5, metalness: 0.0 });
+  var pickGroup = new T.Group(); model.add(pickGroup);
+  var raycaster = new T.Raycaster();
+  var infoEl = $('info');
+  function mmStr(v) { return String(Math.round(v * 1000)); }
+  function describe(it) {
+    var size;
+    if (it.k === 'box') {
+      var s = [it.s[0] * 1000, it.s[1] * 1000, it.s[2] * 1000].sort(function (x, y) { return y - x; });
+      if (it.nom) s[0] = it.nom;
+      size = Math.round(s[0]) + ' × ' + Math.round(s[1]) + ' × ' + Math.round(s[2]) + ' мм';
+    } else if (it.k === 'cyl') size = 'Ø' + mmStr(it.r * 2) + ' × ' + mmStr(it.h) + ' мм';
+    else size = 'Ø' + mmStr(it.r * 2) + ' мм';
+    var nm = it.n || 'Отвод дымохода', code = nm.split(' ')[0];
+    return { code: CODE[code] ? code : nm, name: CODE[code] ? code + ' · ' + CODE[code] : nm, mat: MATNAME[it.m] || '', size: size };
+  }
+  function chainVisible(o) { while (o) { if (!o.visible) return false; o = o.parent; } return true; }
+  function showInfo(d) {
+    if (!infoEl) return;
+    if (!measure) { infoEl.hidden = true; return; }
+    infoEl.hidden = false;
+    $('info-name').textContent = d ? d.name : 'Нажмите на деталь';
+    $('info-size').textContent = d ? d.size : '';
+    $('info-mat').textContent = d ? d.mat : 'Размер появится здесь';
+  }
+  function clearSel() {
+    if (selected) { selected.material = selected.userData.mat0; selected = null; }
+    if (pickSprite) { pickGroup.remove(pickSprite); pickSprite = null; }
+    showInfo(null);
+  }
+  function selectMesh(m) {
+    clearSel();
+    if (!m) return;
+    var d = describe(m.userData.it);
+    m.userData.mat0 = m.material; m.material = hiMat; selected = m;
+    pickSprite = textSprite([d.code, d.size], '#ffd8a8', 0.2);
+    pickSprite.position.set(m.position.x, m.position.y + 0.3, m.position.z);
+    pickGroup.add(pickSprite);
+    showInfo(d);
+  }
+  function pickRay() {
+    var hits = raycaster.intersectObjects(pickables, false);
+    for (var i = 0; i < hits.length; i++) if (chainVisible(hits[i].object)) return hits[i].object;
+    return null;
+  }
+  function onTap(x, y) {
+    if (!measure || asm.playing) return;
+    var r = canvas.getBoundingClientRect();
+    raycaster.setFromCamera(new T.Vector2(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1), camera);
+    selectMesh(pickRay());
+  }
+  $('btn-measure').addEventListener('click', function () {
+    measure = !measure;
+    $('btn-measure').setAttribute('aria-pressed', measure ? 'true' : 'false');
+    clearSel();
+  });
+
+  // ---------- анимация сборки ----------
+  var STAGES = ['Опоры', 'Каркас пола', 'Настил и подиум под котёл', 'Передняя стена', 'Задняя стена', 'Боковые стены',
+    'Стропила', 'Обрешётка и лобовые планки', 'Профнастил', 'Котёл и дымоход'];
+  function stageOf(it) {
+    if (it.g === 'supports') return 0;
+    if (it.g === 'floor') return it.m === 'plank' ? 1 : 2;
+    if (it.g === 'walls') { var c = it.n.charAt(1); return c === '1' ? 3 : c === '2' ? 4 : 5; }
+    if (it.g === 'roof') return it.m === 'lumber' ? 6 : (it.m === 'sheet' ? 8 : 7);
+    return 9;
+  }
+  var asm = { playing: false, t: 0, list: [], total: 0, lastStage: -1 };
+  var asmBtn = $('btn-asm');
+  (function prepAsm() {
+    model.updateMatrixWorld(true);
+    pickables.forEach(function (m) {
+      var it = m.userData.it, b = new T.Box3().setFromObject(m), st = stageOf(it);
+      m.userData.stage = st; m.userData.by = m.position.y;
+      var ymin = Math.round(b.min.y * 1000), cx = Math.round(it.c[0] * 1000), cz = Math.round(it.c[2] * 1000);
+      m.userData.key = st === 5 ? [cx > 1500 ? 1 : 0, ymin, cz] : [ymin, cx, cz];
+    });
+    asm.list = pickables.slice().sort(function (a, b) {
+      if (a.userData.stage !== b.userData.stage) return a.userData.stage - b.userData.stage;
+      for (var i = 0; i < 3; i++) if (a.userData.key[i] !== b.userData.key[i]) return a.userData.key[i] - b.userData.key[i];
+      return 0;
+    });
+    var t = 0, last = -1;
+    asm.list.forEach(function (m) {
+      if (m.userData.stage !== last) { if (last >= 0) t += 0.5; last = m.userData.stage; }
+      m.userData.delay = t; t += 0.13;
+    });
+    asm.total = t + 0.8;
+  })();
+  function startAsm() {
+    clearSel();
+    Object.keys(state).forEach(function (k) { setLayer(k, true); });
+    groups.dims.visible = false;
+    if (!inXR) { presets.front(); applyCam(); }
+    asm.t = 0; asm.lastStage = -1; asm.playing = true;
+    asmBtn.textContent = 'Стоп'; asmBtn.setAttribute('aria-pressed', 'true');
+    pickables.forEach(function (m) { m.visible = false; });
+  }
+  function stopAsm() {
+    asm.playing = false;
+    pickables.forEach(function (m) { m.visible = true; m.position.y = m.userData.by; });
+    groups.dims.visible = state.dims;
+    asmBtn.textContent = 'Сборка'; asmBtn.setAttribute('aria-pressed', 'false');
+    say('');
+  }
+  function updateAsm(dt) {
+    asm.t += dt;
+    var cur = -1;
+    for (var i = 0; i < asm.list.length; i++) {
+      var m = asm.list[i], s = (asm.t - m.userData.delay) / 0.5;
+      if (s <= 0) { m.visible = false; continue; }
+      var k = Math.min(s, 1), e = 1 - Math.pow(1 - k, 3);
+      m.visible = true; m.position.y = m.userData.by + (1 - e) * 1.0;
+      cur = m.userData.stage;
+    }
+    if (cur !== asm.lastStage) { asm.lastStage = cur; if (cur >= 0) say('Шаг ' + (cur + 1) + ' из ' + STAGES.length + ' · ' + STAGES[cur]); }
+    if (!inXR) { cam.theta += dt * 0.12; applyCam(); }
+    if (asm.t > asm.total) stopAsm();
+  }
+  asmBtn.addEventListener('click', function () { if (asm.playing) stopAsm(); else startAsm(); });
+
+  var ptrs = {}, lastDist = 0, lastMid = null, tap = null;
+  function two() { var k = Object.keys(ptrs); return k.length === 2 ? [ptrs[k[0]], ptrs[k[1]]] : null; }
+  canvas.addEventListener('pointerdown', function (e) {
+    canvas.setPointerCapture(e.pointerId);
+    ptrs[e.pointerId] = { x: e.clientX, y: e.clientY, b: e.button };
+    tap = Object.keys(ptrs).length === 1 ? { x: e.clientX, y: e.clientY, t: performance.now() } : null;
+    var t = two();
+    if (t) { lastDist = Math.hypot(t[0].x - t[1].x, t[0].y - t[1].y); lastMid = { x: (t[0].x + t[1].x) / 2, y: (t[0].y + t[1].y) / 2 }; }
+  });
+  function pan(dx, dy) {
+    var right = new T.Vector3().setFromMatrixColumn(camera.matrix, 0);
+    var up = new T.Vector3().setFromMatrixColumn(camera.matrix, 1);
+    var k = cam.r * 0.0016;
+    cam.target.addScaledVector(right, -dx * k).addScaledVector(up, dy * k);
+  }
+  canvas.addEventListener('pointermove', function (e) {
+    var p = ptrs[e.pointerId]; if (!p) return;
+    var dx = e.clientX - p.x, dy = e.clientY - p.y;
+    if (tap && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 8) tap = null;
+    var t0 = two();
+    p.x = e.clientX; p.y = e.clientY;
+    if (t0) {
+      var t = two();
+      var dist = Math.hypot(t[0].x - t[1].x, t[0].y - t[1].y);
+      var mid = { x: (t[0].x + t[1].x) / 2, y: (t[0].y + t[1].y) / 2 };
+      if (lastDist > 0) cam.r = Math.min(30, Math.max(0.6, cam.r * lastDist / dist));
+      if (lastMid) pan(mid.x - lastMid.x, mid.y - lastMid.y);
+      lastDist = dist; lastMid = mid;
+    } else if (p.b === 2 || e.shiftKey) {
+      pan(dx, dy);
+    } else {
+      cam.theta -= dx * 0.008;
+      cam.phi = Math.min(1.55, Math.max(0.04, cam.phi - dy * 0.008));
+    }
+    applyCam();
+  });
+  function endPtr(e) { delete ptrs[e.pointerId]; lastDist = 0; lastMid = null; }
+  canvas.addEventListener('pointerup', function (e) {
+    if (tap && Object.keys(ptrs).length === 1 && performance.now() - tap.t < 600) onTap(e.clientX, e.clientY);
+    tap = null; endPtr(e);
+  });
+  canvas.addEventListener('pointercancel', endPtr);
+  canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  canvas.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    cam.r = Math.min(30, Math.max(0.6, cam.r * Math.exp(e.deltaY * 0.001)));
+    applyCam();
+  }, { passive: false });
+
+  function resize() {
+    var w = window.innerWidth, h = window.innerHeight;
+    if (renderer.xr.isPresenting) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize); resize();
+
+  // ---------- WebXR: AR на Quest 3 ----------
+  var xr = { active: false, mode: null, needsPlace: false, placing: true, yaw: 0, x: 0, z: 0, height: 0,
+    scaleIdx: 0, hand: {}, ctrls: [], hint: null, hintUntil: 0, prevBtn: {} };
+  var SCALES = [1, 0.5, 0.2, 0.1];
+  var rayMat = new T.LineBasicMaterial({ color: 0xffffff });
+  function setupController(i) {
+    var c = renderer.xr.getController(i);
+    var line = new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(0, 0, 0), new T.Vector3(0, 0, -3)]), rayMat);
+    line.visible = false; c.add(line); c.userData.line = line;
+    c.addEventListener('connected', function (e) { c.userData.hand = e.data && e.data.handedness; c.userData.src = e.data; });
+    c.addEventListener('select', function () {
+      if (xr.hint) xr.hintUntil = 0;
+      if (xr.placing) { xr.placing = false; return; }
+      if (asm.playing) return;
+      c.getWorldPosition(tmpV); c.getWorldQuaternion(tmpQ); tmpD.set(0, 0, -1).applyQuaternion(tmpQ);
+      raycaster.set(tmpV, tmpD);
+      selectMesh(pickRay());
+    });
+    c.addEventListener('squeezestart', function () { xr.placing = !xr.placing; });
+    scene.add(c); xr.ctrls.push(c);
+  }
+  setupController(0); setupController(1);
+
+  var tmpV = new T.Vector3(), tmpD = new T.Vector3(), tmpQ = new T.Quaternion();
+  function headPose() {
+    var xc = renderer.xr.getCamera();
+    xc.getWorldPosition(tmpV); xc.getWorldDirection(tmpD);
+    return { p: tmpV.clone(), d: tmpD.clone() };
+  }
+  function applyPlacement() {
+    pivot.position.set(xr.x, xr.height, xr.z);
+    pivot.rotation.set(0, xr.yaw, 0);
+    pivot.scale.setScalar(SCALES[xr.scaleIdx]);
+  }
+  function cycleScale() {
+    xr.scaleIdx = (xr.scaleIdx + 1) % SCALES.length;
+    var s = SCALES[xr.scaleIdx];
+    xr.height = s < 1 ? 0.8 : 0;   // уменьшенный макет ставим на высоту стола
+    applyPlacement();
+  }
+  function buttonEdge(key, pressed, fn) {
+    if (pressed && !xr.prevBtn[key]) fn();
+    xr.prevBtn[key] = pressed;
+  }
+  function xrFrame(dt) {
+    var session = renderer.xr.getSession(); if (!session) return;
+    var hp = headPose();
+    if (xr.needsPlace && hp.p.y > 0.3) {
+      var f = hp.d.clone(); f.y = 0; if (f.lengthSq() < 1e-4) f.set(0, 0, -1); f.normalize();
+      xr.x = hp.p.x + f.x * 3.4; xr.z = hp.p.z + f.z * 3.4; xr.yaw = Math.atan2(-f.x, -f.z);
+      xr.height = 0; xr.scaleIdx = 0; xr.needsPlace = false; xr.placing = true;
+      applyPlacement();
+      xr.hint = textSprite(['Котельная 3x2 м, масштаб 1:1', 'Курок: поставить, затем размер детали', 'Хват: снова переставить модель', 'Левый стик: двигать',
+        'Правый стик: поворот, высота; нажатие: сборка', 'A: масштаб   B: крыша   X: стены   Y: размеры'], '#f5f5f5', 0.5);
+      xr.hint.position.set(hp.p.x + f.x * 1.2, Math.max(1.0, hp.p.y - 0.25), hp.p.z + f.z * 1.2);
+      scene.add(xr.hint); xr.hintUntil = performance.now() + 25000;
+    }
+    if (xr.hint && performance.now() > xr.hintUntil) { scene.remove(xr.hint); xr.hint = null; }
+    var f2 = hp.d.clone(); f2.y = 0; if (f2.lengthSq() < 1e-4) f2.set(0, 0, -1); f2.normalize();
+    var rt = new T.Vector3(-f2.z, 0, f2.x);
+    var rightCtrl = null;
+    xr.ctrls.forEach(function (c) { if (c.userData.hand === 'right') rightCtrl = c; });
+    if (!rightCtrl) rightCtrl = xr.ctrls[1];
+    xr.ctrls.forEach(function (c) { c.userData.line.visible = c === rightCtrl; });
+    for (var i = 0; i < session.inputSources.length; i++) {
+      var src = session.inputSources[i], gp = src.gamepad; if (!gp) continue;
+      var ax = gp.axes, bt = gp.buttons;
+      var sx = ax.length > 2 ? ax[2] : 0, sy = ax.length > 3 ? ax[3] : 0;
+      if (Math.abs(sx) < 0.15) sx = 0; if (Math.abs(sy) < 0.15) sy = 0;
+      var h = src.handedness;
+      if (h === 'left') {
+        xr.x += (f2.x * -sy + rt.x * sx) * 1.2 * dt; xr.z += (f2.z * -sy + rt.z * sx) * 1.2 * dt;
+        buttonEdge('lx', !!(bt[4] && bt[4].pressed), function () { setLayer('walls', !state.walls); });
+        buttonEdge('ly', !!(bt[5] && bt[5].pressed), function () { setLayer('dims', !state.dims); });
+      } else if (h === 'right') {
+        xr.yaw -= sx * 1.4 * dt;
+        xr.height = Math.min(2.2, Math.max(0, xr.height - sy * 0.6 * dt));
+        buttonEdge('ra', !!(bt[4] && bt[4].pressed), cycleScale);
+        buttonEdge('rb', !!(bt[5] && bt[5].pressed), function () { setLayer('roof', !state.roof); });
+        buttonEdge('rs', !!(bt[3] && bt[3].pressed), function () { if (asm.playing) stopAsm(); else startAsm(); });
+      }
+    }
+    if (xr.placing && rightCtrl) {
+      rightCtrl.getWorldPosition(tmpV);
+      rightCtrl.getWorldQuaternion(tmpQ);
+      tmpD.set(0, 0, -1).applyQuaternion(tmpQ);
+      if (tmpD.y < -0.03) {
+        var t = -tmpV.y / tmpD.y;
+        if (t > 0 && t < 14) { xr.x = tmpV.x + tmpD.x * t; xr.z = tmpV.z + tmpD.z * t; }
+      }
+    }
+    applyPlacement();
+  }
+
+  renderer.xr.addEventListener('sessionstart', function () {
+    inXR = true; xr.active = true; xr.needsPlace = true; xr.placing = true;
+    grid.visible = xr.mode === 'immersive-vr';
+    scene.background = xr.mode === 'immersive-vr' ? sceneColor() : null;
+    renderer.setClearAlpha(xr.mode === 'immersive-vr' ? 1 : 0);
+    $('ui').hidden = true;
+  });
+  renderer.xr.addEventListener('sessionend', function () {
+    inXR = false; xr.active = false; xr.mode = null;
+    if (xr.hint) { scene.remove(xr.hint); xr.hint = null; }
+    pivot.position.set(1.5, 0, -1.0); pivot.rotation.set(0, 0, 0); pivot.scale.setScalar(1);
+    grid.visible = true; applyBackground(); renderer.setClearAlpha(1);
+    $('ui').hidden = false; resize(); applyCam();
+  });
+
+  async function startXR(mode) {
+    if (!navigator.xr) { say('WebXR не поддерживается этим браузером. Откройте страницу в браузере Quest 3.'); return; }
+    try {
+      xr.mode = mode;
+      renderer.xr.setReferenceSpaceType('local-floor');
+      var session;
+      try {
+        session = await navigator.xr.requestSession(mode, { optionalFeatures: ['local-floor', 'bounded-floor'] });
+      } catch (e1) {
+        session = await navigator.xr.requestSession(mode);
+      }
+      await renderer.xr.setSession(session);
+    } catch (e) {
+      xr.mode = null;
+      say('Не удалось запустить ' + (mode === 'immersive-ar' ? 'AR' : 'VR') + ': ' + (e && e.message ? e.message : e));
+    }
+  }
+  $('btn-ar').addEventListener('click', function () { startXR('immersive-ar'); });
+  $('btn-vr').addEventListener('click', function () { startXR('immersive-vr'); });
+
+  function detectXR() {
+    if (!navigator.xr || !navigator.xr.isSessionSupported) {
+      $('btn-ar').disabled = true; $('btn-vr').disabled = true;
+      return;
+    }
+    navigator.xr.isSessionSupported('immersive-ar').then(function (ok) {
+      $('btn-ar').disabled = !ok;
+    }).catch(function () { $('btn-ar').disabled = true; });
+    navigator.xr.isSessionSupported('immersive-vr').then(function (ok) { $('btn-vr').disabled = !ok; })
+      .catch(function () { $('btn-vr').disabled = true; });
+  }
+  detectXR();
+
+  // ---------- цикл ----------
+  var clock = new T.Clock();
+  renderer.setAnimationLoop(function () {
+    var dt = Math.min(clock.getDelta(), 0.1);
+    if (asm.playing) updateAsm(dt);
+    if (renderer.xr.isPresenting) xrFrame(dt);
+    renderer.render(scene, camera);
+  });
+}
+</script>
+<script>
+(function () {
+  var urls = [
+    'https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r159/three.min.js',
+    'https://unpkg.com/three@0.159.0/build/three.min.js'
+  ];
+  var st = document.getElementById('status');
+  function next(i) {
+    if (window.THREE) { st.hidden = true; try { boot(window.__SPEC__); } catch (e) { st.hidden = false; st.textContent = 'Ошибка запуска: ' + e.message; } return; }
+    if (i >= urls.length) { st.textContent = 'Не удалось загрузить three.js. Проверьте интернет и обновите страницу.'; return; }
+    var s = document.createElement('script');
+    s.src = urls[i]; s.onload = function () { next(i); }; s.onerror = function () { next(i + 1); };
+    document.head.appendChild(s);
+  }
+  next(0);
+})();
+</script>
